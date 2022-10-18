@@ -1,24 +1,25 @@
 let maxPage;
-let page = 1;
+let page = 1;/* variable que va a guardar los pasos del scroll infinito */
 let infiniteScroll;
 
+
 searchFormBtn.addEventListener('click', () => {
-  location.hash = '#search=' + searchFormInput.value;
-});
-
+  location.hash = '#search=' + searchFormInput.value;/* al oprimir buscar te lleva a search y concatenado el valor del input*/
+})
 trendingBtn.addEventListener('click', () => {
-  location.hash = '#trends';
-});
-
+  location.hash = '#trends';/* al oprimir buscar te lleva a search */
+})
 arrowBtn.addEventListener('click', () => {
-  history.back();
-  // location.hash = '#home';
-});
+  //  location.hash = '#home';/* al oprimir buscar te lleva a search */
+  history.back()/* permite regresar en el historial */
 
-window.addEventListener('DOMContentLoaded', navigator, false);
-window.addEventListener('hashchange', navigator, false);
-window.addEventListener('scroll', infiniteScroll, false);
+})
 
+window.addEventListener('DOMContentLoaded', navigator, false);/* llamamos el evento DomContentLoaded de window, la funcion que va a ejecutar y un false */ /* llamamos cuando carge la aplicacion */
+window.addEventListener('hashchange', navigator, false);/* llamamos el evento hashchange de window, la funcion que va a ejecutar y un false */ /* llamamos cuando cambie el hash */
+window.addEventListener('scroll', infiniteScroll, false);/* llamaos al evento que verifica si llegamos al final del scroll */
+
+/* funcion para cambiar ver los hash */
 function navigator() {
   console.log({ location });
 
@@ -26,32 +27,33 @@ function navigator() {
     window.removeEventListener('scroll', infiniteScroll, { passive: false });
     infiniteScroll = undefined;
   }
-  
-  if (location.hash.startsWith('#trends')) {
+
+  if (location.hash.startsWith('#trends')) { /*si comiensa con el hash #trends */
     trendsPage();
-  } else if (location.hash.startsWith('#search=')) {
+  } else if (location.hash.startsWith('#search=')) { /* si comiensa con el hash #search= */
     searchPage();
-  } else if (location.hash.startsWith('#movie=')) {
+  } else if (location.hash.startsWith('#movie=')) { /* si comiensa con el hash #movie= */
     movieDetailsPage();
-  } else if (location.hash.startsWith('#category=')) {
+  } else if (location.hash.startsWith('#category=')) { /* si comiensa con el hash #category= */
     categoriesPage();
   } else {
     homePage();
   }
 
+  /* logica para que el scroll comiense desde el top */
   document.body.scrollTop = 0;
   document.documentElement.scrollTop = 0;
 
-  if (infiniteScroll) {
+  if (infiniteScroll) {/* si en algunas de la condiciones agregamos la variable infinite scroll. llamamos a la varibale infineScroll para cambiarle el resultado */
     window.addEventListener('scroll', infiniteScroll, { passive: false });
   }
 }
-
 function homePage() {
   console.log('Home!!');
 
   headerSection.classList.remove('header-container--long');
   headerSection.style.background = '';
+
   arrowBtn.classList.add('inactive');
   arrowBtn.classList.remove('header-arrow--white');
   headerTitle.classList.remove('inactive');
@@ -62,16 +64,16 @@ function homePage() {
   categoriesPreviewSection.classList.remove('inactive');
   genericSection.classList.add('inactive');
   movieDetailSection.classList.add('inactive');
-  
-  getTrendingMoviesPreview();
-  getCategegoriesPreview();
-}
 
+  getTrendingMoviesPreview();
+  getCategoriesPreview();
+}
 function categoriesPage() {
-  console.log('categories!!');
+  console.log('Categories!!');
 
   headerSection.classList.remove('header-container--long');
   headerSection.style.background = '';
+
   arrowBtn.classList.remove('inactive');
   arrowBtn.classList.remove('header-arrow--white');
   headerTitle.classList.add('inactive');
@@ -83,22 +85,20 @@ function categoriesPage() {
   genericSection.classList.remove('inactive');
   movieDetailSection.classList.add('inactive');
 
-  // ['#category', 'id-name']
-  const [_, categoryData] = location.hash.split('=');
-  const [categoryId, categoryName] = categoryData.split('-');
+  const [_, categoryData] = location.hash.split('=');//['category', 'id-name'] /* desustructuramos y recorremos el array separandolo */
+  const [categoryId, categoryName] = categoryData.split('-')/* volvemos a seaprar el array con - */
 
-  headerCategoryTitle.innerHTML = categoryName;
-  
-  getMoviesByCategory(categoryId);
+  headerCategoryTitle.innerHTML = categoryName;/* accedemos a categoryTitles de node.js*/
+  getMoviesByCategory(categoryId);/* pasasamos como parametro el id */
 
   infiniteScroll = getPaginatedMoviesByCategory(categoryId);
 }
-
 function movieDetailsPage() {
   console.log('Movie!!');
 
   headerSection.classList.add('header-container--long');
-  // headerSection.style.background = '';
+  /*  headerSection.style.background = ''; */
+
   arrowBtn.classList.remove('inactive');
   arrowBtn.classList.add('header-arrow--white');
   headerTitle.classList.add('inactive');
@@ -110,16 +110,15 @@ function movieDetailsPage() {
   genericSection.classList.add('inactive');
   movieDetailSection.classList.remove('inactive');
 
-  // ['#movie', '234567']
-  const [_, movieId] = location.hash.split('=');
-  getMovieById(movieId);
+  const [_, movieId] = location.hash.split('=');//[pelicular, id]
+  getMovieById(movieId);/* funcion que permite ver la informacion de la peli */
 }
-
 function searchPage() {
   console.log('Search!!');
 
   headerSection.classList.remove('header-container--long');
-  headerSection.style.background = '';
+  /*  headerSection.style.background = ''; */
+
   arrowBtn.classList.remove('inactive');
   arrowBtn.classList.remove('header-arrow--white');
   headerTitle.classList.add('inactive');
@@ -130,19 +129,18 @@ function searchPage() {
   categoriesPreviewSection.classList.add('inactive');
   genericSection.classList.remove('inactive');
   movieDetailSection.classList.add('inactive');
-
-  // ['#search', 'platzi']
-  const [_, query] = location.hash.split('=');
+  /* convertimos en array lo que esta en string y recorremos separando de un lado lo que este antes del = y en tro los que este despues del = */
+  const [_, query] = location.hash.split('=');//['·search', 'input.value'] /* desustructuramos y recorremos el array separandolo */
   getMoviesBySearch(query);
 
   infiniteScroll = getPaginatedMoviesBySearch(query);
 }
-
 function trendsPage() {
-  console.log('TRENDS!!');
+  console.log('Trends!!');
 
   headerSection.classList.remove('header-container--long');
-  headerSection.style.background = '';
+  /*  headerSection.style.background = ''; */
+
   arrowBtn.classList.remove('inactive');
   arrowBtn.classList.remove('header-arrow--white');
   headerTitle.classList.add('inactive');
@@ -154,7 +152,7 @@ function trendsPage() {
   genericSection.classList.remove('inactive');
   movieDetailSection.classList.add('inactive');
 
-  headerCategoryTitle.innerHTML = 'Tendencias';
+  headerCategoryTitle.innerHTML = 'Tendencias';/* accedemos a categoryTitles de node.js*/
 
   getTrendingMovies();
 
