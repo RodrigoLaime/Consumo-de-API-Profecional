@@ -6,8 +6,21 @@ const api = axios.create({/* creanos una nueva instancia de axios */
 });
 
 /* UTILS */
-function createMovies(movies, container) {/* pasarle el array y el contenedor */
-  container.innerHTML = '';
+const lazyLoader = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      const url = entry.target.getAttribute('data-img')
+      /*       console.log(entry.target); */
+      entry.target.setAttribute('src', url);
+    }
+  });
+});
+
+
+function createMovies(movies, container, { lazyLoad = false, clean = true } = {}) {/* pasarle el array y el contenedor */
+  if (clean) {
+    container.innerHTML = '';
+  }
 
   movies.forEach(movie => {/* movie hace referencia a la respuesta json de la api */
     /* Crear Elementos -----------------*/
@@ -20,7 +33,21 @@ function createMovies(movies, container) {/* pasarle el array y el contenedor */
     const movieImg = document.createElement('img');
     movieImg.classList.add('movie-img');
     movieImg.setAttribute('alt', movie.title); /* atributo alt y la propiedad de la api title */
-    movieImg.setAttribute('src', 'https://image.tmdb.org/t/p/w300' + movie.poster_path);/* el atributo SRC la URL del img concatenada con la PROPIEDAD de la API */
+
+
+    /* si ? lazyLoader es true : si es falso */
+    movieImg.setAttribute(
+      lazyLoad ? 'data-img' : 'src', 'https://image.tmdb.org/t/p/w300' + movie.poster_path);/* el atributo SRC la URL del img concatenada con la PROPIEDAD de la API */
+
+    movieImg.addEventListener('error', () => {
+      movieImg.setAttribute('src', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQirwMo_RBSjS96pBQfEbpKLygfQWkWyfPLOpYpXT1m68SB2VhZ50b4i1QnahAQ5IDzdwM&usqp=CAU');
+      /* movieImg.setAttribute('src', 'https://i.pinimg.com/originals/aa/f7/05/aaf705e06726ce3881288ae4be3ac5fe.jpg'); */
+      /* movieImg.setAttribute('src', 'https://thumbs.dreamstime.com/b/film-logo-template-design-vector-166724559.jpg'); */
+    });
+
+    if (lazyLoad) {
+      lazyLoader.observe(movieImg);
+    }
 
     /* agregar elemento ---------------*/
     movieContainer.appendChild(movieImg);
@@ -63,7 +90,7 @@ async function getTrendingMoviesPreview() {
   console.log(movies)
 
   /* LLamamos la funcion */
-  createMovies(movies, trendingMoviesPreviewList);/* Le pasamos los argumentos que necesita la funcion (el array y el contenedor de peliculas)*/
+  createMovies(movies, trendingMoviesPreviewList, true);/* Le pasamos los argumentos que necesita la funcion (el array y el contenedor de peliculas)*/
 
   // trendingMoviesPreviewList.innerHTML = "";/* variable definida en node.js */ /* cada que carge se recetea la informacion para que no se duplique la informacion */
   //movies.forEach(movie => {/* movie hace referencia a la respuesta json de la api */
@@ -127,7 +154,7 @@ async function getMoviesByCategory(id) {
   const movies = data.results;/* obtenemos la propiedad de results de data que tiene las peliculas */
   console.log({ data, movies });
 
-  createMovies(movies, genericSection);
+  createMovies(movies, genericSection, true);
 
   //genericSection.innerHTML = "";/* variable definida en node.js */ /* cada que carge se recetea la informacion para que no se duplique la informacion */
   //movies.forEach(movie => {/* movie hace referencia a la respuesta json de la api */
@@ -150,16 +177,52 @@ async function getMoviesByCategory(id) {
 async function getMoviesBySearch(query) {
   const { data } = await api('search/movie', {/* Url de api endpoin tendencia y su apikey */
     params: {/* pasa parametros */
-      query
-    }
+      query,
+    },
   });
 
   /*  const data = await res.json(); */
 
   const movies = data.results;/* obtenemos la propiedad de results de data que tiene las peliculas */
-  console.log({ data, movies });
+  /*  console.log({ data, movies }); */
+
+  maxPage = data.total_pages;
+  console.log(maxPage);
 
   createMovies(movies, genericSection);
+}
+
+function getPaginatedMoviesBySearch(query) {
+
+  return async function () {
+    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+    /* hacemos la validacion de si llegamos al final  */
+    const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
+
+    const pageIsNotMax = page < maxPage; /* si la pagina en la que estamos es menor a la cantidad maxima de pagina */
+    /* mandamos a llamar la nueva API  */
+    if (scrollIsBottom && pageIsNotMax) {/* mi scrol tiene que estar al final y mi pagina no puede ser la ultima pagina */
+      page++;
+      const { data } = await api('search/movie', {/* Url de api endpoin tendencia y su apikey */
+        params: {/* pasa parametros */
+          query,
+          page,
+        }
+      });
+
+      /*  const data = await res.json(); */
+
+      const movies = data.results;/* obtenemos la propiedad de results de data que tiene las peliculas */
+
+      createMovies(movies, genericSection, { lazyLoad: true, clean: false })
+    }
+
+  }
+  /*   const btnLoadMore = document.createElement('button');
+    btnLoadMore.innerText = 'Cargar Mas';
+    btnLoadMore.addEventListener('click', getPaginatedTrendingMovies);
+    genericSection.appendChild(btnLoadMore); */
+
 }
 
 async function getTrendingMovies() {
@@ -168,8 +231,46 @@ async function getTrendingMovies() {
 
   const movies = data.results;/* obtenemos la propiedad de results de data que tiene las peliculas */
 
+  maxPage = data.total_pages;
+
   /* LLamamos la funcion */
-  createMovies(movies, genericSection);/* Le pasamos los argumentos que necesita la funcion (el array y el contenedor de peliculas)*/
+  createMovies(movies, genericSection, { lazyLoad: true, clean: true });/* Le pasamos los argumentos que necesita la funcion (el array y el contenedor de peliculas)*/
+
+  /*   const btnLoadMore = document.createElement('button');
+    btnLoadMore.innerText = 'Cargar Mas';
+    btnLoadMore.addEventListener('click', getPaginatedTrendingMovies);
+    genericSection.appendChild(btnLoadMore); */
+
+}
+
+/* logica para hacer scroll infinito */
+
+async function getPaginatedTrendingMovies() {
+
+  const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+  /* hacemos la validacion de si llegamos al final  */
+  const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
+
+  const pageIsNotMax = page < maxPage; /* si la pagina en la que estamos es menor a la cantidad maxima de pagina */
+  /* mandamos a llamar la nueva API  */
+  if (scrollIsBottom && pageIsNotMax) {/* mi scrol tiene que estar al final y mi pagina no puede ser la ultima pagina */
+    page++;
+    const { data } = await api('trending/movie/day', {
+      params: {
+        page,
+      },
+    });
+
+    const movies = data.results;
+    /*  console.log(data); */
+
+    createMovies(movies, genericSection, { lazyLoad: true, clean: false })
+  }
+
+  /*   const btnLoadMore = document.createElement('button');
+    btnLoadMore.innerText = 'Cargar Mas';
+    btnLoadMore.addEventListener('click', getPaginatedTrendingMovies);
+    genericSection.appendChild(btnLoadMore); */
 
 }
 

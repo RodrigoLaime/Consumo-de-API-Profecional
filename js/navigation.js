@@ -1,3 +1,8 @@
+let maxPage;
+let page = 1;/* variable que va a guardar los pasos del scroll infinito */
+let infiniteScroll;
+
+
 searchFormBtn.addEventListener('click', () => {
   location.hash = '#search=' + searchFormInput.value;/* al oprimir buscar te lleva a search y concatenado el valor del input*/
 })
@@ -10,12 +15,18 @@ arrowBtn.addEventListener('click', () => {
 
 })
 
-window.addEventListener('DOMContentLoaded', navigator);/* llamamos el evento DomContentLoaded de window, la funcion que va a ejecutar y un false */ /* llamamos cuando carge la aplicacion */
+window.addEventListener('DOMContentLoaded', navigator, false);/* llamamos el evento DomContentLoaded de window, la funcion que va a ejecutar y un false */ /* llamamos cuando carge la aplicacion */
 window.addEventListener('hashchange', navigator, false);/* llamamos el evento hashchange de window, la funcion que va a ejecutar y un false */ /* llamamos cuando cambie el hash */
+window.addEventListener('scroll', infiniteScroll, false);/* llamaos al evento que verifica si llegamos al final del scroll */
 
 /* funcion para cambiar ver los hash */
 function navigator() {
   console.log({ location });
+
+  if (infiniteScroll) {
+    window.removeEventListener('scroll', infiniteScroll, { passive: false });
+    infiniteScroll = undefined;
+  }
 
   if (location.hash.startsWith('#trends')) { /*si comiensa con el hash #trends */
     trendsPage();
@@ -32,6 +43,10 @@ function navigator() {
   /* logica para que el scroll comiense desde el top */
   document.body.scrollTop = 0;
   document.documentElement.scrollTop = 0;
+
+  if (infiniteScroll) {/* si en algunas de la condiciones agregamos la variable infinite scroll. llamamos a la varibale infineScroll para cambiarle el resultado */
+    window.addEventListener('scroll', infiniteScroll, { passive: false });
+  }
 }
 function homePage() {
   console.log('Home!!');
@@ -115,6 +130,8 @@ function searchPage() {
   /* convertimos en array lo que esta en string y recorremos separando de un lado lo que este antes del = y en tro los que este despues del = */
   const [_, query] = location.hash.split('=');//['·search', 'input.value'] /* desustructuramos y recorremos el array separandolo */
   getMoviesBySearch(query);
+
+  infiniteScroll = getPaginatedMoviesBySearch(query);
 }
 function trendsPage() {
   console.log('Trends!!');
@@ -136,4 +153,6 @@ function trendsPage() {
   headerCategoryTitle.innerHTML = 'Tendencias';/* accedemos a categoryTitles de node.js*/
 
   getTrendingMovies();
+
+  infiniteScroll = getPaginatedTrendingMovies;
 }
