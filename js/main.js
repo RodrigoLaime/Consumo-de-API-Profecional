@@ -153,8 +153,11 @@ async function getMoviesByCategory(id) {
 
   const movies = data.results;/* obtenemos la propiedad de results de data que tiene las peliculas */
   console.log({ data, movies });
+  maxPage = data.total_pages;
 
-  createMovies(movies, genericSection, true);
+  createMovies(movies, genericSection, {
+    lazyLoad: true
+  });
 
   //genericSection.innerHTML = "";/* variable definida en node.js */ /* cada que carge se recetea la informacion para que no se duplique la informacion */
   //movies.forEach(movie => {/* movie hace referencia a la respuesta json de la api */
