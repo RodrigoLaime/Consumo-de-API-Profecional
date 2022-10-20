@@ -93,3 +93,10 @@ Pero el equipo de QA reporta que al navegar a otra sección y luego volver a la 
 Limpiando el contenedor HTML donde se renderiza la información antes de cada consulta a la API.
 
 location.hast
+
+
+
+
+##
+JSON.stringify(obj) //convierte objetos a string
+JSON.parse(string) //convierte string a objetos

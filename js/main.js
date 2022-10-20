@@ -8,6 +8,33 @@ const api = axios.create({
   },
 });
 
+function likedMovieList() {
+  const item = JSON.parse(localStorage.getItem('liked_movies'));/* leer elemento de ls*/ /* convertimos de string a objeto */
+  let movie;
+
+  if (item) {/* si hay algo en item */
+    movie = item;
+  } else {
+    movie = {};
+  }
+  return movie;
+}
+
+function likeMovie(movie) {
+
+  const likedMovies = likedMovieList();
+  console.log(likedMovies);
+
+  if (likedMovies[movie.id]) {/* si hay algo en liked movies */
+    likedMovies[movie.id] = undefined;
+    console.log('La pelicula ya estaba en LS. Eliminar')
+  } else {
+    likedMovies[movie.id] = movie;/* guartar toda la informacion de movie */
+    console.log('La pelicula no estaba en LS, Agregar')
+  }
+
+  localStorage.setItem('liked_movies', JSON.stringify(likedMovies));/* agregar elemento a ls */ /* convertimos de objeto a string */
+}
 
 // Utils
 
@@ -35,7 +62,7 @@ function createMovies(
   movies.forEach(movie => {
     const movieContainer = document.createElement('div');
     movieContainer.classList.add('movie-container');
-   
+
 
     const movieImg = document.createElement('img');
     movieImg.classList.add('movie-img');
@@ -56,9 +83,10 @@ function createMovies(
 
     const movieBtn = document.createElement('button');
     movieBtn.classList.add('movie-btn');
+    likedMovieList()[movie.id] && movieBtn.classList.add('movie-btn--liked');/* si mi pelicula esta en LS agregar stilos */
     movieBtn.addEventListener('click', () => {
       movieBtn.classList.toggle('movie-btn--liked');
-      /* agregar a local storage */
+      likeMovie(movie);
     })
 
     if (lazyLoad) {
@@ -74,7 +102,7 @@ function createMovies(
 function createCategories(categories, container) {
   container.innerHTML = "";
 
-  categories.forEach(category => {  
+  categories.forEach(category => {
     const categoryContainer = document.createElement('div');
     categoryContainer.classList.add('category-container');
 
@@ -128,10 +156,10 @@ function getPaginatedMoviesByCategory(id) {
       scrollHeight,
       clientHeight
     } = document.documentElement;
-    
+
     const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
     const pageIsNotMax = page < maxPage;
-  
+
     if (scrollIsBottom && pageIsNotMax) {
       page++;
       const { data } = await api('discover/movie', {
@@ -141,7 +169,7 @@ function getPaginatedMoviesByCategory(id) {
         },
       });
       const movies = data.results;
-    
+
       createMovies(
         movies,
         genericSection,
@@ -171,10 +199,10 @@ function getPaginatedMoviesBySearch(query) {
       scrollHeight,
       clientHeight
     } = document.documentElement;
-    
+
     const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
     const pageIsNotMax = page < maxPage;
-  
+
     if (scrollIsBottom && pageIsNotMax) {
       page++;
       const { data } = await api('search/movie', {
@@ -184,7 +212,7 @@ function getPaginatedMoviesBySearch(query) {
         },
       });
       const movies = data.results;
-    
+
       createMovies(
         movies,
         genericSection,
@@ -208,7 +236,7 @@ async function getPaginatedTrendingMovies() {
     scrollHeight,
     clientHeight
   } = document.documentElement;
-  
+
   const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
   const pageIsNotMax = page < maxPage;
 
@@ -242,7 +270,7 @@ async function getMovieById(id) {
     ),
     url(${movieImgUrl})
   `;
-  
+
   movieDetailTitle.textContent = movie.title;
   movieDetailDescription.textContent = movie.overview;
   movieDetailScore.textContent = movie.vote_average;
@@ -258,3 +286,13 @@ async function getRelatedMoviesId(id) {
 
   createMovies(relatedMovies, relatedMoviesContainer);
 }
+
+/* Funcion para consumir dato de Local storage */
+function getLikedMovies() {
+  const likedMovies = likedMovieList();
+  const movieArray = Object.values(likedMovies)/* devulve un array con todos los valores del objeto */
+  createMovies(movieArray, likedMovieListArticle, {
+    lazyLoad: true, clean: true
+  });
+  console.log(likedMovies + 'linea 293');
+};
