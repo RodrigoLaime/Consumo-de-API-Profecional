@@ -77,7 +77,7 @@ function createMovies(
     movieImg.addEventListener('error', () => {
       movieImg.setAttribute(
         'src',
-        'https://static.platzi.com/static/images/error/img404.png',
+        'https://us.123rf.com/450wm/jpgon/jpgon1708/jpgon170803311/84345163-ilustraci%C3%B3n-de-una-c%C3%A1mara-de-cine-de-larga-sombra-con-una-etiqueta-hash.jpg?ver=6',
       );
     });
 
